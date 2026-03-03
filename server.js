@@ -32,7 +32,7 @@ app.post("/chat", async (req, res) => {
     }));
 
     const completion = await client.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "llama3-8b-8192-chat",
       messages: safeMessages
     });
 
