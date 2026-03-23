@@ -4,36 +4,50 @@ import Groq from "groq-sdk";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // increased limit for large file extracts
 
 const client = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// health check
+// health check — also used by frontend keep-alive ping
 app.get("/", (req, res) => {
-  res.send("StudyMate backend is running with Groq");
+  res.json({ status: "ok", service: "IDE backend", model: "deepseek-r1-distill-llama-70b" });
 });
 
-// main chat endpoint – matches your index.html exactly
+// main chat endpoint
 app.post("/chat", async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, system } = req.body;
 
-    // basic validation to avoid crashes
+    // basic validation
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "messages array is required" });
     }
 
-    // ensure roles/content are strings
+    // ensure roles and content are clean strings
     const safeMessages = messages.map(m => ({
       role: m.role === "user" ? "user" : "assistant",
       content: String(m.content || "")
     }));
 
+    // build the full messages array — system prompt goes first if provided
+    const fullMessages = [];
+
+    if (system && typeof system === "string" && system.trim().length > 0) {
+      fullMessages.push({
+        role: "system",
+        content: system.trim()
+      });
+    }
+
+    fullMessages.push(...safeMessages);
+
     const completion = await client.chat.completions.create({
-      model: "openai/gpt-oss-120b",
-      messages: safeMessages
+      model: "deepseek-r1-distill-llama-70b",
+      messages: fullMessages,
+      temperature: 0.7,     // balanced — creative but not hallucinating
+      max_tokens: 2048,     // enough for detailed teaching responses
     });
 
     const reply =
@@ -43,11 +57,11 @@ app.post("/chat", async (req, res) => {
     res.json({ reply });
   } catch (error) {
     console.error("Groq error:", error);
-    res.status(500).json({ error: "AI backend error" });
+    res.status(500).json({ error: "AI backend error", detail: error.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
+  console.log(`IDE backend running on port ${PORT}`);
 });
