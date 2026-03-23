@@ -12,7 +12,7 @@ const client = new Groq({
 
 // health check — also used by frontend keep-alive ping
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "IDE backend", model: "deepseek-r1-distill-llama-70b" });
+  res.json({ status: "ok", service: "IDE backend", model: "llama-3.3-70b-versatile" });
 });
 
 // main chat endpoint
