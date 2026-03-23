@@ -44,7 +44,7 @@ app.post("/chat", async (req, res) => {
     fullMessages.push(...safeMessages);
 
     const completion = await client.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b",
+      model: "llama-3.3-70b-versatile",
       messages: fullMessages,
       temperature: 0.7,     // balanced — creative but not hallucinating
       max_tokens: 2048,     // enough for detailed teaching responses
